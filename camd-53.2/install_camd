@@ -1,0 +1,56 @@
+;My first attempt at an installer script.
+;init a few symbols
+(SET @@app-name "CAMD.library")
+(SET #libinstall 0)
+(SET #devinstall 0)
+;procedure for making printable version strings
+(PROCEDURE version-to-string #ver ("%ld.%ld" (/ #ver 65536) (BITAND #ver 65535)))
+
+(message "CAMD "(version-to-string (GETVERSION "camd.library"))" Installer")
+
+(IF	(EXISTS "libs:camd.library")
+	(               ;enter this block if there is an existing CAMD installation
+		(MESSAGE "CAMD Version found in your Amiga:  " (version-to-string (GETVERSION "Libs:camd.library")) ".")
+		(IF ( > (GETVERSION "camd.library") (GETVERSION "libs:camd.library"))
+			(           ;If we have a newer version
+				(MESSAGE "This will update your CAMD.library to "(version-to-string (GETVERSION "camd.library")) )
+				(SET #libinstall 1)
+			)
+			(           ;if we do NOT have a newer version
+				(IF ( < (GETVERSION "camd.library") (GETVERSION "libs:camd.library"))
+					(           ;if the installed version is newer than the one we brought
+						(MESSAGE "You have a newer version installed already")
+						(SET #libinstall 0)
+					)
+					(           ;if they have this version already
+						(MESSAGE "You have this version installed already")
+						(SET #libinstall 0)
+					)
+				)
+			)
+		)
+	)
+	(               ;Enter this block if there is no previous CAMD installed
+		(MESSAGE "Previous version of CAMD not found")
+		(SET #libinstall 1)
+	)
+)
+
+
+
+(IF (< 0 #libinstall)
+	(COPYLIB (SOURCE "camd.library") (DEST "libs:"))
+)
+
+(IF (GETASSIGN "SDK" "avd")
+	(
+		(IF (askchoice (prompt "Do you want to install the CAMD developers files?")
+				(choices "No Thanks" "Yes, Please")
+				(help "These are only needed if you want to write programs that use CAMD.library")
+			)
+			(           ;if they choose to install developer files
+				(copyfiles (SOURCE "devkit") (DEST "SDK:")(ALL))
+			)
+		)
+	)
+)

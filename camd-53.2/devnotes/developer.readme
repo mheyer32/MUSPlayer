@@ -1,0 +1,26 @@
+The Install_CAMD icon will offer to copy all the necessary developers
+files to your SDK:local directory, if it sees an SDK: on your machine. 
+These are only useful if you have the SDK installed, and would like to 
+write some CAMD programs.
+
+It will also copy the CAMD autodoc into sdk:local/documentation/autodoc.
+This file is a version of the classic autodoc that has been updated with
+some OS4 specific details.
+
+The includes have ben updated slightly, but are functionally identical.
+That's what's nice about having a non-moving target. ;)
+
+I also included camd.intro, for those who would like to know more about
+how to write for CAMD, and how it works.
+
+For example CAMD programs, download CAMD Tools from OS4Depot. Source for 
+each is included.
+
+If you'd like help adding CAMD support to your program, write me 
+and I'll do what I can to help.
+
+Lyle Hazelwood lylehaze@gmail.com
+
+My personal request for donations:
+https://sites.google.com/site/takeaprogrammertolunch/
+

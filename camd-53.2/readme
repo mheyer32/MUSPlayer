@@ -1,0 +1,153 @@
+camd.library 53.2				June 2012
+
+This update is a major rewrite of camd.library.
+Before this release, camd has been a port of the
+AROS version of this library. This new version
+is completely OS4 native. While still based on
+the code provided by Kjetil Mattheusen, it now
+has shed the AROS lib headers and conditional
+branches, It has also been migrated to the modern
+variable types, had most of the list handling
+updated, and no longer links with _USE_INLINE_
+defined.
+
+The resulting library is about 60% of it's 
+previous size, and includes a few minor bug fixes
+as well.
+
+With a re-write of this magnitude just completed,
+we may have picked up a few bugs in the library.
+Please contact me with any issues so that we can 
+keep the updates in order.
+
+This library has been tested with USB and Gameport
+MIDI interfaces, it has also been tested with 68K
+CAMD apps and appears to be working fine.
+
+Previous versions offered, but did not support
+notification for member changes within a cluster.
+Signal notification is now supported, and callback
+hooks for the same will be added soon.
+
+Apparently SoftSyn was the first app to try and 
+use that feature. As a result, 53.2 is the minimum
+library version for SoftSyn support.
+
+*****************************************************************
+camd.library 50.8				November 06, 2008
+
+This update fixes a problem that occurred when the opening task
+would exit, if joyport MIDI interfaces were opened by that task. 
+(Thanks Andy!) Also now allows calling ICamd->RemoveMidiLink() 
+and ICamd->DeleteMidi() with null arguments, which was 
+documented but never supported.
+
+No changes to dev kit. It is the same as it was in 50.6
+
+Make Beautiful Music,
+Lyle
+******************************************************************
+camd.library 50.6                               July 1, 2007
+
+This update fixes a problem when flushing the library.
+Also has an improved installer script.
+No other known issues at this time.
+
+If this is your first install of CAMD, you'll need to add drivers
+for your MIDI port(s). Drivers are available for:
+EMU10Kx  (Soundblaster)
+ENVY24HT (Phase28 and ESI Juli())
+VIA686   (AmigaOne builtin) (MIDI_OUT only)
+USB      (class compliant USB MIDI devices)
+
+All of these are available at OS4Depot
+http://os4depot.net/index.php?function=browse&cat=driver/misc
+
+
+Make beautiful music,
+Lyle Hazelwood, lylehaze@bellsouth.net
+******************************************************************
+camd.library 50.5				February 05, 2006
+
+This update fixes a problem with QuerySysEx() that could
+affect receiving System Exclusive messages properly.
+Also added are fixes for GetMidiAttrsA(), and a complete
+rewrite of NextMidiLink(). This corrects all the bugs
+that have been reported at this time.
+This version also includes an install script, and all the
+files necessary for developers to write for CAMD.
+
+I have decided to package the Emu10KX driver separately,
+since there are many different drivers available now.
+
+Lyle Hazelwood
+******************************************************************
+camd.library 50.2				June 11, 2005
+
+camd.library is code to connect MIDI applications
+with each other and external controllers, synthesizers,
+sampling devices, and musical effects. 
+
+This is an update of the camd.library for OS4.
+This update fixes a bug in PutSysEx(). It also
+adds StartClusterNotify() and EndClusterNotify(),
+adds support for cable messages, and cleans up 
+a few details.
+
+To install, simply copy camd.library to your libs:
+directory. Then copy whatever drivers suit your
+system to devs:midi. The driver for emu10k based 
+sound cards is included, with source. A output-only 
+driver for the onboard via chipset on a Micro-A1 is 
+available from OS4Depot.net. More drivers may
+be available in the future.
+
+If you install the included emu10kx driver, see the
+install help file for more information.
+
+If you are updating a working installation, just copy
+the new library to libs: and reboot.
+
+Also included are the necessary files for developers
+wishing to write tools for camd. To use these, you'll
+need to install the OS4 SDK first, then open the
+camdincl.lha file and specify SDK: as the destination.
+The files will be installed in various places in your
+sdk:local directory.
+The autodoc is in SDK:Local/documents/AutoDoc/camd.doc
+
+Credits:
+This revision is from Lyle Hazelwood, lylehaze@gmail.com
+camd.library was ported to OS4 by Davy Wentzler from AROS source.
+emu10kx and via686 drivers by Davy Wentzler.
+Original AROS source by  Kjetil Matheussen. 
+
+Original readme follows
+****************************************************************
+
+This is the first port of CAMD (Commodore Amiga MIDI Device)
+for OS4 native. It is based on the AROS source, but has a change
+to the drivers, which makes it incompatible to old drivers.
+The old drivers were 68k exe's which were abused as libraries.
+I had to change this madness to proper libraries in order to
+get it to work and to have a cleaner solution. On classics you
+can still use the 68k camd library with the camd.l.main glue file.
+
+The first CAMD native driver for the emu10kx gameport is also
+included.
+
+It has been quite an effort to port, and I guess also for the original
+effort by Kjetil Matheussen, by reverse engineering CAMD and making
+it into proper C code for AROS.
+
+I intend to send the source code changes back to Kjetil ASAP, but
+right now it needs some cleaning up before that. Source of the
+emu10kx CAMD driver is included, although you'll also need the
+accompanying emu10kx AHI driver code for it to work/compile.
+
+Note: OpenMidiDevice() is not supported anymore, which shouldn't
+be a problem.
+
+Davy Wentzler
+info@audio-evolution.com
+
