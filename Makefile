@@ -52,10 +52,12 @@ endif
 
 #
 CFLAGS = $(RUNTIME_CFLAGS)
-CFLAGS += -fbaserel -m68030 -m68881 -msmall-code
-CFLAGS += -Ofast -fstrength-reduce -fomit-frame-pointer
+CFLAGS += -fbaserel -m68030 -msmall-code
+CFLAGS += -O0 -fstrength-reduce -fomit-frame-pointer
 CFLAGS += -Werror -Wimplicit -Wstrict-prototypes
 CFLAGS += -Icamd-37.1/development/include
+
+CFLAGS += -DNDEBUG -D__NO_NET_API
 
 LDFLAGS = $(RUNTIME_LDFLAGS)
 
@@ -69,6 +71,7 @@ OUT = $(CURDIR)/bin/
 # not too sophisticated dependency
 OBJS = \
 		main.c
+
 OUTOBJS = $(addprefix $(INTERMEDIATE), $(OBJS))
 
 #$(info $(OBJS))
@@ -77,6 +80,12 @@ all:	 MUSPlayer
 
 clean:
 	rm *.o
+
+%.s:	%.c Makefile
+	$(CC) $(CFLAGS) -Wa,-adhln -g -c $<  > $@
+
+%.o:	%.c Makefile
+	$(CC) $(CFLAGS) -c $< -o $@
 
 MUSPlayer: camd.h $(OBJS) Makefile
 	$(CC) $(CFLAGS) $(OBJS)  \

@@ -33,17 +33,27 @@ are convenient to the program's author.  Apologies to the reader.
 #include <pragmas/camd_pragmas.h>
 
 /* CAMD Real Time Library Includes */
-#include <clib/realtime_protos.h>
-#include <libraries/realtime.h>
-#include <pragmas/realtime_pragmas.h>
+#include <proto/realtime.h>
+//#include <libraries/realtime.h>
 
 /* System function prototypes */
-#include <clib/dos_protos.h>
-#include <clib/exec_protos.h>
+#include <proto/dos.h>
+#include <proto/exec.h>
 
 /* Lattice Standard I/O */
 #include <stdio.h>
 #include <stdlib.h>
+
+#define REG(xn, parm) parm __asm(#xn)
+#define REGARGS __regargs
+#define STDARGS __stdargs
+#define SAVEDS __saveds
+#define ALIGNED __aligned
+#define FAR __far
+#define CHIP __chip
+#define INTERRUPT __interrupt  //__interrupt
+#define INLINE __inline__
+#define NOINLINE __attribute__((noinline))
 
 /**********    debug macros     ***********/
 #define MYDEBUG 1
@@ -63,8 +73,8 @@ void dprintf(UBYTE *fmt, ...);
 
 #define MINARGS 2
 
-UBYTE *vers = "\0$VER: playmf 40.1";
-UBYTE *usage = "Usage: playmf midifilename";
+const static UBYTE *vers = (const UBYTE *)"\0$VER: playmf 40.1";
+const static UBYTE *usage = (const UBYTE *)"Usage: playmf midifilename";
 
 #ifdef __SASC
 void __regargs __chkabort(void) {} /* Disable SAS CTRL-C checking. */
@@ -114,7 +124,7 @@ struct DecTrack
 #define MIDIBUFSIZE 512L
 
 /* Library Bases */
-struct Library *CamdBase, *RealTimeBase;
+struct Library *CamdBase;
 
 /*-------------------*/
 /*     Prototypes    */
@@ -142,7 +152,7 @@ UBYTE *pfillbuf[2], lastRSchan;
 BOOL Playing;
 
 #define ALLNOTESOFFLEN 48
-UBYTE AllNotesOff[ALLNOTESOFFLEN] = {
+static const UBYTE AllNotesOff[ALLNOTESOFFLEN] = {
     MS_Ctrl | 0,  MM_AllOff, 0, MS_Ctrl | 1,  MM_AllOff, 0, MS_Ctrl | 2,  MM_AllOff, 0, MS_Ctrl | 3,  MM_AllOff, 0,
     MS_Ctrl | 4,  MM_AllOff, 0, MS_Ctrl | 5,  MM_AllOff, 0, MS_Ctrl | 6,  MM_AllOff, 0, MS_Ctrl | 7,  MM_AllOff, 0,
     MS_Ctrl | 8,  MM_AllOff, 0, MS_Ctrl | 9,  MM_AllOff, 0, MS_Ctrl | 10, MM_AllOff, 0, MS_Ctrl | 11, MM_AllOff, 0,
@@ -170,9 +180,10 @@ ComVarLen(value) UBYTE *value;
     return (newval);
 }
 
-void main(int argc, char **argv)
+int STDARGS main(int argc, char *argv[])
 {
-    char *smfname, iobuffer[14];
+    char *smfname;
+    __aligned char iobuffer[14];
     struct SMFHeader *pSMFHeader;
     UBYTE *pbyte, x;
     WORD w;
@@ -215,14 +226,17 @@ void main(int argc, char **argv)
     /*--------------------------------------*/
     /* Open the CAMD and RealTime libraries */
     /*--------------------------------------*/
+    RealTimeBase = (struct RealTimeBase *)OpenLibrary("realtime.library", 0L);
+    if (!RealTimeBase)
+        kill("Can't open Real Time Library\n");
+
     CamdBase = OpenLibrary("camd.library", 0L);
     if (!CamdBase)
         kill("Can't open CAMD MIDI Library\n");
 
-    RealTimeBase = OpenLibrary("realtime.library", 0L);
-    if (!RealTimeBase)
-        kill("Can't open CAMD Real Time Library\n");
-
+    DOSBase = (struct DosLibrary *)OpenLibrary("dos.library", 0L);
+    if (!DOSBase)
+        kill("Can't open DOS Library\n");
     /*---------------*/
     /* Open the File */
     /*---------------*/
@@ -346,9 +360,9 @@ void main(int argc, char **argv)
     /* Set up a MidiNode and a MidiLink.  Link the  */
     /* node to the default "out.0" MidiCluster .    */
     /*----------------------------------------------*/
-    pMidiNode = CreateMidi(MIDI_Name, "PlayMF Player", MIDI_MsgQueue, 0L, /* This is a send-only   */
-                           MIDI_SysExSize, 0L,                            /* MIDI node so no input */
-                           TAG_END);                                      /* buffers are needed.   */
+    pMidiNode = CreateMidi(MIDI_Name, (Tag) "PlayMF Player", MIDI_MsgQueue, 0L, /* This is a send-only   */
+                           MIDI_SysExSize, 0L,                                  /* MIDI node so no input */
+                           TAG_END);                                            /* buffers are needed.   */
     if (!pMidiNode)
         kill("No memory for MIDI Node\n");
 
@@ -457,8 +471,8 @@ void main(int argc, char **argv)
     if (midiSignal == -1)
         kill("Couldn't allocate a signal bit\n");
 
-    pPlayer = CreatePlayer(PLAYER_Name, "PlayMF Player", PLAYER_Conductor, "PlayMF Conductor", PLAYER_AlarmSigTask, mt,
-                           PLAYER_AlarmSigBit, midiSignal, TAG_END);
+    pPlayer = CreatePlayer(PLAYER_Name, (Tag) "PlayMF Player", PLAYER_Conductor, (Tag) "PlayMF Conductor",
+                           PLAYER_AlarmSigTask, (Tag)mt, PLAYER_AlarmSigBit, midiSignal, TAG_END);
     if (!pPlayer)
         kill("Can't create a Player\n");
 
@@ -578,6 +592,8 @@ void main(int argc, char **argv)
     if (mt != NULL)
         SetTaskPri(mt, oldpri);
 
+    return 0;
+
     kill("");
 }
 
@@ -587,7 +603,7 @@ void main(int argc, char **argv)
 void kill(char *killstring)
 {
     if (Playing)
-        ParseMidi(pMidiLink, AllNotesOff, ALLNOTESOFFLEN);
+        ParseMidi(pMidiLink, (UBYTE *)(AllNotesOff), ALLNOTESOFFLEN);
     if (pPlayer)
         DeletePlayer(pPlayer);
     if (midiSignal != -1)
@@ -599,9 +615,11 @@ void kill(char *killstring)
     if (pMidiNode)
         DeleteMidi(pMidiNode);
     if (RealTimeBase)
-        CloseLibrary(RealTimeBase);
+        CloseLibrary((struct Library *)RealTimeBase);
     if (CamdBase)
         CloseLibrary(CamdBase);
+    if (DOSBase)
+        CloseLibrary((struct Library *)DOSBase);
     if (smfhandle)
         Close(smfhandle);
     if (smfdata)
