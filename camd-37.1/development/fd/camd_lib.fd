@@ -10,7 +10,7 @@ UnlockCAMD(lock)(a0)
 *
 * --------------------- MidiNode
 *
-CreateMidiA(name,tags)(a0)
+CreateMidiA(tags)(a0)
 DeleteMidi(mi)(a0)
 SetMidiAttrsA(mi,tags)(a0/a1)
 GetMidiAttrsA(mi,tags)(a0/a1)
