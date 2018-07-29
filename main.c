@@ -43,6 +43,7 @@ are convenient to the program's author.  Apologies to the reader.
 /* Lattice Standard I/O */
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #define REG(xn, parm) parm __asm(#xn)
 #define REGARGS __regargs
@@ -56,7 +57,7 @@ are convenient to the program's author.  Apologies to the reader.
 #define NOINLINE __attribute__((noinline))
 
 /**********    debug macros     ***********/
-#define MYDEBUG 1
+#define MYDEBUG 0
 void kprintf(UBYTE *fmt, ...);
 void dprintf(UBYTE *fmt, ...);
 #define DEBTIME 0
@@ -69,6 +70,28 @@ void dprintf(UBYTE *fmt, ...);
 #else
 #define D(x) ;
 #endif /* MYDEBUG */
+
+
+#if MYDEBUG
+#define DEBUGPRINT(x)   \
+    do {                \
+        printf x;       \
+        fflush(stdout); \
+    } while (0)
+
+
+    int debugStep;
+
+#define DEBUGSTEP()                                                         \
+    do {                                                                    \
+        printf(">>>> %d, %s : %d \n", debugStep++, __FUNCTION__, __LINE__); \
+        fflush(stdout);                                                     \
+    } while (0);
+#else
+    #define DEBUGPRINT(x)
+    #define DEBUGSTEP()
+#endif
+
 /********** end of debug macros **********/
 
 #define MINARGS 2
@@ -111,8 +134,8 @@ struct DecTrack
     UBYTE d2;         /* data byte 2 */
     ULONG absmlength; /* 32-bit absolute metalength */
     UBYTE *endmarker;
-    UBYTE metatype; /* meta event type */
     BOOL playable;
+    UBYTE metatype; /* meta event type */
     UBYTE pad3;
 };
 
@@ -140,16 +163,16 @@ ULONG changetempo(ULONG, ULONG, ULONG);
 /*--------------*/
 /*   Globals    */
 /*--------------*/
-struct MidiLink *pMidiLink;
-struct MidiNode *pMidiNode;
-struct Player *pPlayer;
-BPTR smfhandle;
-UBYTE *smfdata, *ptrack[TWOxMAXTRAX], *pData, trackct;
-LONG midiSignal, smfdatasize, tempo_offs;
-ULONG fillclock[2];
-ULONG oldclock, sizeDTrack, tfactor, initfactor, division, donecount;
-UBYTE *pfillbuf[2], lastRSchan;
-BOOL Playing;
+static struct MidiLink *pMidiLink;
+static struct MidiNode *pMidiNode;
+static struct Player *pPlayer;
+static BPTR smfhandle;
+static UBYTE *smfdata, *ptrack[TWOxMAXTRAX], *pData, trackct;
+static LONG midiSignal, smfdatasize, tempo_offs;
+static ULONG fillclock[2];
+static ULONG oldclock, sizeDTrack, tfactor, initfactor, division, donecount;
+static UBYTE *pfillbuf[2], lastRSchan;
+static BOOL Playing;
 
 #define ALLNOTESOFFLEN 48
 static const UBYTE AllNotesOff[ALLNOTESOFFLEN] = {
@@ -259,6 +282,7 @@ int STDARGS main(int argc, char *argv[])
     /*-----------------*/
     /* Evaluate Header */
     /*-----------------*/
+    assert(!((ULONG)iobuffer & 3));
     pSMFHeader = (struct SMFHeader *)iobuffer;
     if (pSMFHeader->ChunkID != MThd)
         kill("Midifile has unknown header ID.\n");
@@ -276,7 +300,7 @@ int STDARGS main(int argc, char *argv[])
     if (pSMFHeader->Ntrks > MAXTRAX)
         kill("Midifile has more than MAXTRAX tracks.\n");
     else
-        printf("Midifile has %ld tracks\n", pSMFHeader->Ntrks);
+        printf("Midifile has %d tracks\n", pSMFHeader->Ntrks);
 
     /*--------------------*/
     /* Evaluate time base */
@@ -298,7 +322,7 @@ int STDARGS main(int argc, char *argv[])
         else
             kill("Non-metrical time in 1/nths of a second\n");
     } else {
-        printf("Midifile has 1/%ldth quarter notes per delta tick\n", pSMFHeader->Division);
+        printf("Midifile has 1/%dth quarter notes per delta tick\n", pSMFHeader->Division);
         division = (ULONG)pSMFHeader->Division;
 
         /* According to "Standrd MIDI Files 1.0", July 1988, page 5 */
@@ -354,8 +378,8 @@ int STDARGS main(int argc, char *argv[])
 
     if (trackct != pSMFHeader->Ntrks)
         kill("Too many or missing tracks\n");
-    printf("There are %ld tracks in this Midifile.\n", trackct);
 
+    printf("There are %hhu tracks in this Midifile.\n", trackct);
     /*----------------------------------------------*/
     /* Set up a MidiNode and a MidiLink.  Link the  */
     /* node to the default "out.0" MidiCluster .    */
@@ -366,8 +390,8 @@ int STDARGS main(int argc, char *argv[])
     if (!pMidiNode)
         kill("No memory for MIDI Node\n");
 
-    pMidiLink = AddMidiLink(pMidiNode, MLTYPE_Sender, MLINK_Comment, "PlayMF Player Link", MLINK_Parse, TRUE,
-                            MLINK_Location, "out.0", TAG_END);
+    pMidiLink = AddMidiLink(pMidiNode, MLTYPE_Sender, MLINK_Comment, (Tag) "PlayMF Player Link", MLINK_Parse, TRUE,
+                            MLINK_Location, (Tag) "out.0", TAG_END);
     if (!pMidiLink)
         kill("No memory for MIDI Link\n");
 

@@ -53,7 +53,7 @@ endif
 #
 CFLAGS = $(RUNTIME_CFLAGS)
 CFLAGS += -fbaserel -m68030 -msmall-code
-CFLAGS += -O0 -fstrength-reduce -fomit-frame-pointer
+CFLAGS += -Ofast -fstrength-reduce -fomit-frame-pointer
 CFLAGS += -Werror -Wimplicit -Wstrict-prototypes
 CFLAGS += -Icamd-37.1/development/include
 
@@ -92,7 +92,7 @@ MUSPlayer: camd.h $(OBJS) Makefile
 	$(LDFLAGS) -o $(OUT)MUSPlayer.exe
 
 camd.h: camd-37.1/development/fd/camd_lib.fd Makefile
-	fd2pragma --infile camd-37.1/development/fd/camd_lib.fd --clib camd-37.1/development/include/clib/camd_protos.h --externc --special 47
+	fd2pragma --infile camd-37.1/development/fd/camd_lib.fd --clib camd-37.1/development/include/clib/camd_protos.h --externc --special 40
 
 
 #############################################################
